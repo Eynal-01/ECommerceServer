@@ -40,7 +40,7 @@ namespace App.Server
         private static void SetupServer()
         {
             Console.WriteLine("Setting up server . . .");
-            serverSocket.Bind(new IPEndPoint(IPAddress.Parse("10.1.18.1"), PORT));
+            serverSocket.Bind(new IPEndPoint(IPAddress.Parse("10.2.27.8"), PORT));
             serverSocket.Listen(0);
             serverSocket.BeginAccept(AcceptCallback, null);
         }
@@ -52,7 +52,7 @@ namespace App.Server
             {
                 socket = serverSocket.EndAccept(ar);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return;
             }
@@ -84,7 +84,6 @@ namespace App.Server
             Array.Copy(buffer, recBuf, received);
             string msg = Encoding.ASCII.GetString(recBuf);
             Console.WriteLine("Received Text : " + msg);
-
             if (msg.ToLower() == "exit")
             {
                 current.Shutdown(SocketShutdown.Both);
@@ -113,6 +112,8 @@ namespace App.Server
 
                         var myEntityType = Assembly.GetAssembly(typeof(Product)).GetTypes()
                             .FirstOrDefault(a => a.FullName.Contains(className));
+
+
 
                         var obj = JsonConvert.DeserializeObject(jsonPart, myEntityType);
 
@@ -146,33 +147,50 @@ namespace App.Server
                             var jsonString = String.Empty;
                             object objectResponse = null;
 
-                            if (result.Length == 3)
+                            if (methodName.EndsWith("Search"))
                             {
-                                paramId = int.Parse(result[2]);
-                                objectResponse = myMethod.Invoke(myInstance, new object[] { paramId });
+                                result[2] = $@"?{result[2]}";
                             }
-                            else
-                            {
-                                //Product\Search?productname="Apple"
-                                //Product\Search?productname="Apple"&unitprice=39
-                                if (result[1].Contains('?'))
-                                {
-                                    var res = result[1].Split('?');
-                                    var prop = res[1].Split(new[] { '=' }, 2);
-                                    var properties = myType.GetProperties();
-                                    PropertyInfo myProp = properties.FirstOrDefault(p => p.Name.ToLower().Contains(prop[0]));
 
+                            if (result.Length >= 3)
+                            {
+                                if (result[2].Contains('?'))
+                                {
+                                    if (result[2].Contains('&'))
+                                    {
+                                        var res = result[2].Split(new[] { '&' }, 2);
+                                        var prodName = res[0];
+                                        var prodPrice = res[1];
+                                        prodName = prodName.Remove(0, 1);
+                                        objectResponse = myMethod.Invoke(myInstance, new object[] { prodName, decimal.Parse(prodPrice) });
+                                    }
+                                    else
+                                    {
+                                        result[2] = result[2].Remove(0, 1);
+                                        objectResponse = myMethod.Invoke(myInstance, new object[] { result[2], 0m });
+
+                                    }
                                 }
                                 else
                                 {
-                                    objectResponse = myMethod.Invoke(myInstance, null);
+
+                                    paramId = int.Parse(result[2]);
+                                    objectResponse = myMethod.Invoke(myInstance, new object[] { paramId });
                                 }
+
+                                jsonString = JsonConvert.SerializeObject(objectResponse);
+                                byte[] data = Encoding.ASCII.GetBytes(jsonString);
+                                current.Send(data);
                             }
+                            else
+                            {
+                                objectResponse = myMethod.Invoke(myInstance, null);
 
-                            jsonString = JsonConvert.SerializeObject(objectResponse);
-                            byte[] data = Encoding.ASCII.GetBytes(jsonString);
-                            current.Send(data);
 
+                                jsonString = JsonConvert.SerializeObject(objectResponse);
+                                byte[] data = Encoding.ASCII.GetBytes(jsonString);
+                                current.Send(data);
+                            }
                         }
                     }
                 }
@@ -228,4 +246,3 @@ namespace App.Server
         }
     }
 }
-

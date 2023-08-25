@@ -13,7 +13,7 @@ namespace App.DataAccess.Concrete
         public DbSet<Product> Products { get; set; }
         public DbSet<Category> Categories { get; set; }
         public NorthwindContext()
-            :base("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=Northwind;Integrated Security=True;")
+            :base("Data Source=(localdb)\\ProjectModels;Initial Catalog=Northwind;Integrated Security=True;")
         {
 
         }

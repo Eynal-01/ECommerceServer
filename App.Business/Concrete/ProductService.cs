@@ -30,7 +30,7 @@ namespace App.Business.Concrete
 
         public void Delete(Product product)
         {
-            _productDal.Delete(product);    
+            _productDal.Delete(product);
         }
 
         public List<Product> GetAll()
@@ -55,7 +55,14 @@ namespace App.Business.Concrete
 
         public List<Product> Search(string productName, decimal price = 0)
         {
-            return _productDal.GetList(p => p.ProductName.Contains(productName) && (p.UnitPrice <= price || price == 0));
+            if (price != 0)
+            {
+                return _productDal.GetList(p => p.ProductName.Contains(productName) && (p.UnitPrice <= price));
+            }
+            else
+            {
+                return _productDal.GetList(p => p.ProductName.Contains(productName));
+            }
         }
     }
 }

@@ -10,11 +10,11 @@ namespace App.Business.Abstract
     public interface IProductService
     {
         List<Product> GetAll();
-        List<Product> GetByCategory(int categoryId);    
+        List<Product> GetByCategory(int categoryId);
         void Add(Product product);
-        void Update(Product product);   
+        void Update(Product product);
         void Delete(Product product);
         Product GetById(int productId);
-        List<Product> Search(string productName, decimal price);
+        List<Product> Search(string productName, decimal price = 0);
     }
 }
